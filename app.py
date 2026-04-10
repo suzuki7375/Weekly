@@ -33,14 +33,22 @@ def add_slide_copy(dest_prs: Presentation, source_slide):
     for rel in source_slide.part.rels.values():
         if "notesSlide" in rel.reltype:
             continue
+
+        # 依關係類型決定 target：外部連結要用字串 URL，內部關係要用 target part。
+        is_external = getattr(rel, "is_external", False)
+        if is_external:
+            target = rel.target_ref
+        else:
+            target = rel.target_part if hasattr(rel, "target_part") else rel._target
+
         # python-pptx 在不同版本的 Relationship API 名稱不同：
         # - 新版: add_relationship(...)
         # - 舊版: _add_relationship(...)
         rels = new_slide.part.rels
         if hasattr(rels, "add_relationship"):
-            rels.add_relationship(rel.reltype, rel._target, rel.rId)
+            rels.add_relationship(rel.reltype, target, rel.rId, is_external=is_external)
         else:
-            rels._add_relationship(rel.reltype, rel._target, rel.rId)
+            rels._add_relationship(rel.reltype, target, rel.rId, is_external=is_external)
 
     return new_slide
 

@@ -9,6 +9,7 @@ from tkinter import filedialog, messagebox
 
 from pptx import Presentation
 from pptx.enum.shapes import PP_PLACEHOLDER
+from pptx.oxml.ns import qn
 from pptx.util import Pt
 
 
@@ -30,6 +31,7 @@ def add_slide_copy(dest_prs: Presentation, source_slide):
         new_el = deepcopy(shape.element)
         new_slide.shapes._spTree.insert_element_before(new_el, "p:extLst")
 
+    rel_id_map = {}
     for rel in source_slide.part.rels.values():
         if "notesSlide" in rel.reltype:
             continue
@@ -46,9 +48,21 @@ def add_slide_copy(dest_prs: Presentation, source_slide):
         # - 舊版: _add_relationship(...)
         rels = new_slide.part.rels
         if hasattr(rels, "add_relationship"):
-            rels.add_relationship(rel.reltype, target, rel.rId, is_external=is_external)
+            new_rid = rels.add_relationship(rel.reltype, target, rel.rId, is_external=is_external)
+            if isinstance(new_rid, str) and new_rid != rel.rId:
+                rel_id_map[rel.rId] = new_rid
         else:
-            rels._add_relationship(rel.reltype, target, rel.rId, is_external=is_external)
+            new_rid = rels._add_relationship(rel.reltype, target, is_external=is_external)
+            if new_rid != rel.rId:
+                rel_id_map[rel.rId] = new_rid
+
+    if rel_id_map:
+        rel_attrs = (qn("r:id"), qn("r:embed"), qn("r:link"))
+        for el in new_slide.element.iter():
+            for attr in rel_attrs:
+                old_rid = el.get(attr)
+                if old_rid in rel_id_map:
+                    el.set(attr, rel_id_map[old_rid])
 
     return new_slide
 

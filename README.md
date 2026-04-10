@@ -11,16 +11,46 @@
 
 ## 安裝
 
+### macOS / Linux
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
+
+### Windows PowerShell
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
+
+> 建議固定使用 `python -m pip` 安裝套件，避免安裝到和執行程式不同的 Python。
 
 ## 執行
 
 ```bash
 python app.py
+```
+
+## 常見問題
+
+### `ModuleNotFoundError: No module named 'pptx'`
+
+代表目前執行 `app.py` 的那個 Python 環境還沒安裝 `python-pptx`。
+
+請在同一個終端機執行：
+
+```powershell
+"C:\Program Files\Python313\python.exe" -m pip install -r requirements.txt
+```
+
+安裝後可用以下指令確認：
+
+```powershell
+"C:\Program Files\Python313\python.exe" -m pip show python-pptx
 ```
 
 ## 備註
